@@ -25,11 +25,24 @@ function buildPaginationRow(mode, scopeValue, selectedPosition, currentPage, tot
     .setDisabled(currentPage >= totalPages - 1 || totalPages <= 1);
 
   const searchButton = new ButtonBuilder()
-    .setCustomId('search_again')
+    .setCustomId(`search_again:${mode}`)
     .setLabel('🔍')
     .setStyle(ButtonStyle.Primary);
 
   return new ActionRowBuilder().addComponents(prevButton, nextButton, searchButton);
+}
+
+function buildPositionSelectionRow() {
+  const positionMenu = new StringSelectMenuBuilder()
+    .setCustomId('select_position_global')
+    .setPlaceholder('Posição')
+    .addOptions(searchPositions.map((position) => ({
+      label: position,
+      value: position,
+      description: `Buscar ${position} em todas as seleções`
+    })));
+
+  return new ActionRowBuilder().addComponents(positionMenu);
 }
 
 function getPlayersForContext(mode, scopeValue, selectedPosition) {
@@ -121,22 +134,9 @@ module.exports = {
         const selectedScope = interaction.values[0];
 
         if (selectedScope === 'all_teams') {
-          const positionOptions = searchPositions.map((position) => ({
-            label: position,
-            value: position,
-            description: `Buscar ${position} em todas as seleções`
-          }));
-
-          const positionMenu = new StringSelectMenuBuilder()
-            .setCustomId('select_position_global')
-            .setPlaceholder('Posição')
-            .addOptions(positionOptions);
-
-          const row = new ActionRowBuilder().addComponents(positionMenu);
-
           return interaction.update({
             content: 'Escolha a posição para buscar em todas as seleções.',
-            components: [row],
+            components: [buildPositionSelectionRow()],
             embeds: []
           });
         }
@@ -192,20 +192,9 @@ module.exports = {
         const embeds = buildResultEmbeds(pagePlayers, 'global', selectedPosition);
         const paginationRow = buildPaginationRow('global', 'all_teams', selectedPosition, page, totalPages);
 
-        const positionMenu = new StringSelectMenuBuilder()
-          .setCustomId('select_position_global')
-          .setPlaceholder('Posição')
-          .addOptions(searchPositions.map((position) => ({
-            label: position,
-            value: position,
-            description: `Buscar ${position} em todas as seleções`
-          })));
-
-        const row = new ActionRowBuilder().addComponents(positionMenu);
-
         await interaction.update({
           content: `**Busca por posição:** ${selectedPosition}\nPágina 1/${totalPages}`,
-          components: [row, paginationRow],
+          components: [paginationRow],
           embeds
         });
       } catch (error) {
@@ -217,10 +206,15 @@ module.exports = {
       }
     }
 
-    if (interaction.isButton() && interaction.customId === 'search_again') {
-      const row = buildScopeSelectionRow();
+    if (interaction.isButton() && interaction.customId.startsWith('search_again')) {
+      const [, mode] = interaction.customId.split(':');
+      const row = mode === 'global' ? buildPositionSelectionRow() : buildScopeSelectionRow();
+      const content = mode === 'global'
+        ? 'Escolha outra posição para buscar em todas as seleções.'
+        : 'Escolha uma seleção para ver todos os jogadores ou use “Todas as seleções” para buscar por posição.';
+
       await interaction.update({
-        content: 'Escolha uma seleção para ver todos os jogadores ou use “Todas as seleções” para buscar por posição.',
+        content,
         components: [row],
         embeds: []
       });
@@ -256,20 +250,9 @@ module.exports = {
           content = `**Jogadores da seleção ${teamName} ${teamFlags[scopeValue] || ''}**\nPágina ${safePage + 1}/${totalPages}`;
         }
 
-        const row = mode === 'global'
-          ? new ActionRowBuilder().addComponents(new StringSelectMenuBuilder()
-            .setCustomId('select_position_global')
-            .setPlaceholder('Posição')
-            .addOptions(searchPositions.map((position) => ({
-              label: position,
-              value: position,
-              description: `Buscar ${position} em todas as seleções`
-            }))))
-          : null;
-
         await interaction.update({
           content,
-          components: row ? [row, paginationRow] : [paginationRow],
+          components: [paginationRow],
           embeds
         });
       } catch (error) {
