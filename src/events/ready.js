@@ -1,10 +1,11 @@
 const { Routes } = require('discord.js');
+const { BOT_VERSION } = require('../config/version');
 
 module.exports = {
-  name: 'ready',
+  name: 'clientReady',
   once: true,
   async execute(client) {
-    console.log(`Bot online como: ${client.user.tag}`);
+    console.log(`Bot online como: ${client.user.tag} - ${BOT_VERSION}`);
 
     if (!client.rest || !client.commandsData) {
       console.warn('Não há dados de comandos ou REST configurados para registrar Slash Commands.');

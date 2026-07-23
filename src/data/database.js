@@ -194,6 +194,18 @@ function playerMatchesPosition(player = {}, selectedPosition) {
   return getPlayerPositions(player).includes(normalizedSelected);
 }
 
+function playerMatchesOvr(player = {}, minimumOvr, maximumOvr = minimumOvr) {
+  const ovr = Number(player.ovr);
+  const minimum = Number(minimumOvr);
+  const maximum = Number(maximumOvr);
+
+  if (!Number.isFinite(ovr) || !Number.isFinite(minimum) || !Number.isFinite(maximum)) {
+    return false;
+  }
+
+  return ovr >= minimum && ovr <= maximum;
+}
+
 module.exports = {
   specialsData,
   teamNamesPT,
@@ -204,5 +216,6 @@ module.exports = {
   getTeamsWithYears,
   getPlayerPositions,
   getAvailablePositionsForTeam,
-  playerMatchesPosition
+  playerMatchesPosition,
+  playerMatchesOvr
 };

@@ -1,9 +1,16 @@
 const { ActionRowBuilder, StringSelectMenuBuilder, SlashCommandBuilder } = require('discord.js');
 const { getTeamsWithYears, teamNamesPT, teamFlags } = require('../data/database');
+const { BOT_VERSION } = require('../config/version');
 
 function buildScopeSelectionRow() {
   const teamsMap = getTeamsWithYears();
   const options = [
+    {
+      label: 'Buscar por OVR',
+      value: 'search_ovr',
+      description: 'Pesquisar jogadores por OVR',
+      emoji: '⭐'
+    },
     {
       label: 'Todas as seleções',
       value: 'all_teams',
@@ -26,7 +33,7 @@ function buildScopeSelectionRow() {
   }
 
   const selectMenu = new StringSelectMenuBuilder()
-    .setCustomId('select_scope')
+    .setCustomId(`select_scope:${BOT_VERSION}`)
     .setPlaceholder('Seleção ou busca global')
     .addOptions(options.slice(0, 25));
 
@@ -40,19 +47,12 @@ module.exports = {
   buildScopeSelectionRow,
 
   async execute(interaction) {
+    await interaction.deferReply({ flags: 64 });
     const row = buildScopeSelectionRow();
 
-    if (interaction.deferred || interaction.replied) {
-      await interaction.editReply({
-        content: 'Escolha uma seleção para ver todos os jogadores ou use “Todas as seleções” para buscar por posição.',
-        components: [row]
-      });
-    } else {
-      await interaction.reply({
-        content: 'Escolha uma seleção para ver todos os jogadores ou use “Todas as seleções” para buscar por posição.',
-        components: [row],
-        flags: 64
-      });
-    }
+    await interaction.editReply({
+      content: `Escolha uma opção para pesquisar jogadores. - ${BOT_VERSION}`,
+      components: [row]
+    });
   }
 };
